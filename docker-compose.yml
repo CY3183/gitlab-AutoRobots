@@ -1,0 +1,48 @@
+version: '3'
+services:      # 定义了要运行的各个服务，每个服务都会作为一个独立的容器来运行
+  web:
+    links:
+      - redis      # web服务连接redis服务
+    depends_on:
+      - redis           # 启动 web 服务之前会先启动 redis 服务。
+    image: autorobt
+    volumes:
+      - ./common:/app/common
+      - ./db.sqlite3:/app/db.sqlite3     # 将本地的 common 目录和 db.sqlite3 文件分别挂载到了容器内部的相应位置。
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - 8000:8000
+
+  celery:
+    volumes:
+      - ./common:/app/common
+      - ./db.sqlite3:/app/db.sqlite3
+    links:
+      - redis
+    depends_on:
+      - redis
+    image: autorobot
+    restart: always
+    command: celery -A AutoRobot worker -l info -P eventlet
+    environment:
+      - TZ=Asia/Shanghai
+
+  redis:
+    restart: always
+    image: redis:6.2
+    environment:
+      - TZ=Asia/Shanghai
+    command: redis-server --requirepass 123456
+
+#  nginx:
+#    restart: always
+#    depends_on:
+#      - web
+#    image: nginx:stable
+#    ports:
+#      - 8001:80
+#    volumes:
+#      - "./configs/nginx/nginx.conf:/etc/nginx/nginx.conf"
+#      - "./static:/usr/share/nginx/static:rw"

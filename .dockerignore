@@ -1,0 +1,4 @@
+venv
+configs
+common/test_conf.ini
+db.sqlite3

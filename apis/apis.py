@@ -57,14 +57,29 @@ def forminfo(url,header):
 
 def formdata(method, url, header):
     '''表单数据'''
-    response_info = requests.request(method, url=url, headers=header, verify=False)
-    if response_info.status_code == 200:
-        form_info = response_info.text
-        # 将响应数据转换为python对象字典
-        form_info = json.loads(form_info)
-        return form_info
-    else:
-        return JsonResponse(status=response_info.status_code, data=response_info.text)
+    form_info = []  # 存储所有页面的数据
+    current_page = 1  # 起始页码
+    while True:
+        # 发起请求
+        response_info = requests.request(method, url=url, headers=header, params={'page': current_page}, verify=False)
+        if response_info.status_code == 200:
+            # 解析响应数据
+            form_infos = json.loads(response_info.text)
+            form_info.extend(form_infos)  # 将当前页数据添加到列表中
+            # 检查响应头是否包含下一页信息
+            if 'X-SLP-Current-Page' in response_info.headers and 'X-SLP-Total-Pages' in response_info.headers:
+                current_page = int(response_info.headers['X-SLP-Current-Page'])
+                total_pages = int(response_info.headers['X-SLP-Total-Pages'])
+                # 如果当前页小于总页数，继续获取下一页数据
+                if current_page < total_pages:
+                    current_page += 1
+                else:
+                    break  # 已经获取了所有页面的数据，退出循环
+            else:
+                break  # 如果没有下一页信息，也退出循环
+        else:
+            return JsonResponse(status=response_info.status_code, data=response_info.text)
+    return form_info
 
 def single_record(url,header):
     '''查询单条数据'''
@@ -103,6 +118,7 @@ def robot(method,url,header,payload,callback=None):
 def modifify_form(url, header, params):
     '''修改表单记录'''
     modify = requests.request('put', url=url, json=params, headers=header, verify=False)
+    logging.info(modify.text)
 
 
 def auto_dispatch(text):
@@ -150,6 +166,7 @@ def new_flows_journeys_route(header,flow_id, user_id, payload_url=None, entries_
     url = settings.SKY_URL
     url = '%s/api/v4/yaw/flows/%d/journeys' % (url, flow_id)
     first = requests.request('POST', url=url, json=params, headers=header, verify=False)
+    logger.info("第一次发起流程返回的信息：%s" % first.text)
     return first.text
 
 
@@ -179,7 +196,7 @@ def new_flows_journeys_propose(header,flow_id, user_id, next_vertex_id, entries_
 
 
 def feishu_robot(url, order_id=None, work_list=None):
-    '''飞机机器人'''
+    '''飞书机器人'''
     # 请求头
     header = {
         "Content-Type":"application/json"
@@ -236,8 +253,9 @@ def flow_recod_moment(url,header,datatime=None):
         for dict in info:
             assignment = dict.get("assignment")
             if assignment:
-                updated_at = assignment.get("updated_at")
-                return updated_at
+                if assignment.get("status") == 'finished':
+                    updated_at = assignment.get("updated_at")
+                    return updated_at
     else:
         for dict in info:
             assignment = dict.get("assignment")

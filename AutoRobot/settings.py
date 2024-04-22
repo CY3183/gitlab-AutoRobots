@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'Sign_Listen_Form',
-    'Reply_Listen_Flow'
+    'Reply_Listen_Flow',
+    'Sign_Listen_Form'
 ]
 TEST_CONF_DIR = os.path.join(BASE_DIR,"common/test_conf.ini")
 
@@ -112,7 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -133,6 +133,7 @@ STATIC_ROOT = os.path.join(BASE_DIR,'static')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 BROKER_URL = 'redis://:123456@redis:6379/14'  # 任务容器地址，redis数据库地址
 CELERY_RESULT_BACKEND = 'redis://:123456@redis:6379/15'  # 任务结束的地址
 
@@ -157,10 +158,6 @@ APPID = cf.get("test_robot_conf","APPID")
 APPSECRET = cf.get("test_robot_conf","APPSECRET")
 ID = int(cf.get("test_robot_conf","ID"))
 
-# APPID = '7372dee4ff2e6b3876e3b386a336a9171444fba5d3a1e5ae3e23c91d92bb68c6'
-# APPSECRET = '17c24c7d264b2e7b629b9399a69c8be8cc50fc3ea2b9cfd79e8a484aaab986ca'
-# ID = '1'
-
 
 
 LOGGING = {
@@ -184,4 +181,12 @@ LOGGING = {
             'propagate': True,
         },
     },
+}
+
+# 缓存配置
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
 }

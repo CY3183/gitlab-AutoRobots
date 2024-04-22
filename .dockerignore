@@ -1,4 +1,4 @@
 venv
 configs
 common/test_conf.ini
-db.sqlite3
+docker-compose.yml

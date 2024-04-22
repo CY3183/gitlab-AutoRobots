@@ -5,7 +5,7 @@ services:      # 定义了要运行的各个服务，每个服务都会作为一
       - redis      # web服务连接redis服务
     depends_on:
       - redis           # 启动 web 服务之前会先启动 redis 服务。
-    image: autorobt
+    image: autorobot
     volumes:
       - ./common:/app/common
       - ./db.sqlite3:/app/db.sqlite3     # 将本地的 common 目录和 db.sqlite3 文件分别挂载到了容器内部的相应位置。
@@ -15,7 +15,7 @@ services:      # 定义了要运行的各个服务，每个服务都会作为一
     ports:
       - 8000:8000
 
-  celery:
+  celery_worker:
     volumes:
       - ./common:/app/common
       - ./db.sqlite3:/app/db.sqlite3
@@ -26,6 +26,20 @@ services:      # 定义了要运行的各个服务，每个服务都会作为一
     image: autorobot
     restart: always
     command: celery -A AutoRobot worker -l info -P eventlet
+    environment:
+      - TZ=Asia/Shanghai
+
+  celery_beat:
+    volumes:
+      - ./common:/app/common
+      - ./db.sqlite3:/app/db.sqlite3
+    links:
+      - redis
+    depends_on:
+      - redis
+    image: autorobot
+    restart: always
+    command: celery -A AutoRobot beat -l info
     environment:
       - TZ=Asia/Shanghai
 
